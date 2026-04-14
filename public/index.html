@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jorden Hub</title>
+
+<style>
+body{margin:0;background:black;color:white;font-family:sans-serif;}
+#boot{position:fixed;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:black;}
+#main{display:none;padding:10px;}
+
+button{padding:10px;margin:5px;background:#222;color:white;border:none;border-radius:10px;}
+canvas{background:black;border:1px solid #333;width:100%;height:300px;}
+
+.page{display:none;}
+#home{display:block;}
+
+#aiBox{
+ position:fixed;bottom:10px;right:10px;width:250px;
+ background:#111;padding:10px;border-radius:10px;
+}
+
+input{width:100%;padding:5px;margin-top:5px;background:#222;color:white;border:none;}
+
+#messagesBox{
+ height:200px;
+ overflow:auto;
+ background:#111;
+ padding:5px;
+ border-radius:10px;
+ margin-bottom:5px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- BOOT -->
+<div id="boot">
+<h1>Players of Right Now</h1>
+<p>made by your favorite person</p>
+</div>
+
+<div id="main">
+
+<!-- HOME -->
+<div id="home" class="page">
+<h1>Jorden Hub</h1>
+
+<button onclick="openPage('games')">🎮 Games</button>
+<button onclick="openPage('music')">🎧 Music</button>
+<button onclick="openPage('video')">📺 Video</button>
+<button onclick="openPage('messages')">💬 Messages</button>
+</div>
+
+<!-- GAMES -->
+<div id="games" class="page">
+<h2>Games</h2>
+
+<button onclick="setGame('snake')">Snake</button>
+<button onclick="setGame('pong')">Pong</button>
+<button onclick="setGame('flappy')">Flappy</button>
+<button onclick="setGame('dodge')">Dodge</button>
+<button onclick="setGame('clicker')">Clicker</button>
+<button onclick="setGame('runner')">Runner</button>
+
+<canvas id="gameCanvas"></canvas>
+</div>
+
+<!-- MUSIC -->
+<div id="music" class="page">
+<h2>Music</h2>
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M" width="100%" height="300"></iframe>
+</div>
+
+<!-- VIDEO -->
+<div id="video" class="page">
+<h2>Video</h2>
+<iframe width="100%" height="300" src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
+</div>
+
+<!-- MESSAGES -->
+<div id="messages" class="page">
+<h2>Messages</h2>
+
+<div id="messagesBox"></div>
+<input id="msgInput" placeholder="Type message..." onkeydown="sendMsg(event)">
+</div>
+
+</div>
+
+<!-- AI -->
+<div id="aiBox">
+<div id="aiText">Oh… so now you want a smart assistant 😏</div>
+<input placeholder="Talk to me..." onkeydown="talk(event)">
+<button onclick="startVoice()">🎤</button>
+</div>
+
+<script>
+// BOOT
+setTimeout(()=>{
+ document.getElementById("boot").style.display="none";
+ document.getElementById("main").style.display="block";
+},2000);
+
+// NAV
+function openPage(p){
+ document.querySelectorAll(".page").forEach(x=>x.style.display="none");
+ document.getElementById(p).style.display="block";
+}
+
+// CANVAS
+let c=document.getElementById("gameCanvas");
+let ctx=c.getContext("2d");
+c.width=innerWidth;
+
+// GAME SWITCH
+let game="";
+function setGame(g){game=g;}
+
+setInterval(()=>{
+ ctx.clearRect(0,0,c.width,300);
+ if(game==="snake") snake();
+ if(game==="pong") pong();
+ if(game==="flappy") flappy();
+ if(game==="dodge") dodge();
+ if(game==="clicker") clicker();
+ if(game==="runner") runner();
+},30);
+
+// GAMES
+let s=[{x:100,y:100}],dx=20,dy=0,f={x:200,y:200};
+document.addEventListener("keydown",e=>{
+ if(e.key=="ArrowUp"){dx=0;dy=-20;}
+ if(e.key=="ArrowDown"){dx=0;dy=20;}
+ if(e.key=="ArrowLeft"){dx=-20;dy=0;}
+ if(e.key=="ArrowRight"){dx=20;dy=0;}
+});
+function snake(){
+ s.unshift({x:s[0].x+dx,y:s[0].y+dy});
+ if(s[0].x==f.x&&s[0].y==f.y){f.x=Math.random()*300;f.y=Math.random()*300;}
+ else s.pop();
+ ctx.fillStyle="lime";s.forEach(a=>ctx.fillRect(a.x,a.y,20,20));
+ ctx.fillStyle="red";ctx.fillRect(f.x,f.y,20,20);
+}
+
+let ball={x:200,y:150,dx:4,dy:4},pad=100;
+document.addEventListener("mousemove",e=>pad=e.clientY);
+function pong(){
+ ball.x+=ball.dx;ball.y+=ball.dy;
+ if(ball.y<0||ball.y>300) ball.dy*=-1;
+ if(ball.x<20&&ball.y>pad&&ball.y<pad+80) ball.dx*=-1;
+ ctx.fillRect(10,pad,10,80);
+ ctx.beginPath();ctx.arc(ball.x,ball.y,10,0,6.28);ctx.fill();
+}
+
+let fy=150,fv=0;
+document.addEventListener("click",()=>{if(game==="flappy")fv=-8;});
+function flappy(){fv+=0.5;fy+=fv;ctx.fillRect(100,fy,20,20);}
+
+let px=150,oy=0;
+function dodge(){oy+=5;ctx.fillRect(px,260,20,20);ctx.fillRect(150,oy,20,20);if(oy>300)oy=0;}
+
+let score=0;
+c.onclick=()=>{if(game==="clicker")score++;}
+function clicker(){ctx.fillText("Score:"+score,50,50);}
+
+let ry=260,rv=0;
+document.addEventListener("keydown",e=>{if(game==="runner"&&e.key===" ")rv=-10;});
+function runner(){rv+=0.5;ry+=rv;if(ry>260){ry=260;rv=0;}ctx.fillRect(100,ry,20,20);}
+
+// AI SPEAK
+function speak(t){
+ let s=new SpeechSynthesisUtterance(t);
+ speechSynthesis.speak(s);
+}
+
+// AI
+function talk(e){
+ if(e.key==="Enter"){
+  let i=e.target.value.toLowerCase();
+  let r="Try again 😏";
+
+  if(i.includes("hi")) r="Oh hey.";
+  if(i.includes("snake")){r="Snake time.";setGame("snake");openPage("games");}
+  if(i.includes("pong")){r="Pong loaded.";setGame("pong");openPage("games");}
+  if(i.includes("flappy")){r="You’re gonna lose.";setGame("flappy");openPage("games");}
+  if(i.includes("messages")){r="Checking messages.";openPage("messages");}
+  if(i.includes("music")){r="Playing music.";openPage("music");}
+
+  document.getElementById("aiText").innerText=r;
+  speak(r);
+  e.target.value="";
+ }
+}
+
+// VOICE
+function startVoice(){
+ let rec=new (window.SpeechRecognition||window.webkitSpeechRecognition)();
+ rec.start();
+ rec.onresult=e=>{
+  let t=e.results[0][0].transcript;
+  talk({key:"Enter",target:{value:t}});
+ };
+}
+
+// MESSAGES (LOCAL FAKE CHAT)
+function sendMsg(e){
+ if(e.key==="Enter"){
+  let box=document.getElementById("messagesBox");
+  let msg=e.target.value;
+
+  box.innerHTML+="<div>You: "+msg+"</div>";
+  setTimeout(()=>{
+   box.innerHTML+="<div>Friend: lol ok</div>";
+   box.scrollTop=box.scrollHeight;
+  },1000);
+
+  e.target.value="";
+ }
+}
+</script>
+
+</body>
+</html>
